@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: userImages
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required) - The ID of the user who uploaded the image
+    //   - imageData: string (required) - Base64 encoded image data
+    //   - createdAt: timestamp (required) - When the image was uploaded
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+       return request.auth != null;
+    }
+
+    function isOwner(userId) {
+       return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+       return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function uidUnchanged() {
+       return !('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid;
+    }
+
+    function uidNotModified() {
+       return !('userId' in request.resource.data) || request.resource.data.userId == resource.data.userId;
+    }
+
+    function hasRequiredFields(fields) {
+       return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Domain Validators
+    function isValidUserImage(data) {
+      return hasOnlyAllowedFields(['userId', 'imageData', 'createdAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.imageData is string && data.imageData.size() > 0 && data.imageData.size() < 1048487 && // ~1MB limit
+             data.createdAt is timestamp;
+    }
+
+    match /userImages/{imageId} {
+      allow read: if isAuthenticated() && isDocOwner();
+      allow create: if isAuthenticated() && 
+                    isValidUserImage(request.resource.data) && 
+                    request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    isDocOwner() && 
+                    isValidUserImage(request.resource.data) && 
+                    uidNotModified() && 
+                    areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "entities": {
+    "UserImage": {
+      "title": "User Image",
+      "description": "An image uploaded by a user for window film visualization.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who uploaded the image."
+        },
+        "imageData": {
+          "type": "string",
+          "description": "Base64 encoded image data."
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "description": "When the image was uploaded."
+        }
+      },
+      "required": ["userId", "imageData", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/userImages/{imageId}": {
+      "schema": {
+        "$ref": "#/entities/UserImage"
+      },
+      "description": "Stores user-uploaded images for visualization."
+    }
+  }
+}

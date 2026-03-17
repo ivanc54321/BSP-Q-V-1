@@ -36,3 +36,20 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+@keyframes neon-flicker {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% {
+    text-shadow: none;
+    color: #39ff14;
+    opacity: 1;
+  }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% {
+    text-shadow: none;
+    color: #1a4d1a;
+    opacity: 0.8;
+  }
+}
+
+.animate-neon-flicker {
+  animation: neon-flicker 4s linear infinite;
+}
